@@ -16,7 +16,6 @@ set(EIGEN_MINIMUM_VERSION 3.3.4)
 # If set to ON, will use the system version of Eigen.
 # If set to AUTO, will determine if the system version is suitable.
 set(USE_SYSTEM_EIGEN "OFF" CACHE INTERNAL "Whether to use the system version of Eigen.")
-include(${CMAKE_CURRENT_SOURCE_DIR}/use-system-installation-of-eigen.cmake)
 
 # Check if the version is suitable, otherwise force downloading the newer one.
 if(USE_SYSTEM_EIGEN STREQUAL "AUTO")
@@ -85,9 +84,14 @@ else()
   file(MAKE_DIRECTORY ${EIGEN_CATKIN_EIGEN_INCLUDE})
   ExternalProject_Add(eigen_src
     UPDATE_COMMAND ""
-    URL https://gitlab.com/libeigen/eigen/-/archive/3.3.4/eigen-3.3.4.tar.bz2
-    URL_MD5 6e74a04aeab3417120f1bdef6f3b4881
-    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/StdVector.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/DisableTests.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/FixWarning.patch
+    # URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
+    # URL_MD5 132dde48fe2b563211675626d29f1707
+    
+    GIT_REPOSITORY https://github.com/libigl/eigen
+    GIT_TAG master
+    
+    # PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/StdVector.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/DisableTests.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/FixWarning.patch
+    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/SelfAdjointEigenSolver.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/Tridiagonalization.patch
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CATKIN_DEVEL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF
   )
 
