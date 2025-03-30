@@ -84,14 +84,10 @@ else()
   file(MAKE_DIRECTORY ${EIGEN_CATKIN_EIGEN_INCLUDE})
   ExternalProject_Add(eigen_src
     UPDATE_COMMAND ""
-    # URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
-    # URL_MD5 132dde48fe2b563211675626d29f1707
-    
-    GIT_REPOSITORY https://github.com/libigl/eigen
-    GIT_TAG master
-    
-    # PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/StdVector.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/DisableTests.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/FixWarning.patch
-    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/SelfAdjointEigenSolver.patch && patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/Tridiagonalization.patch
+    URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
+    URL_MD5 132dde48fe2b563211675626d29f1707
+
+    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/Tridiagonalization.patch
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CATKIN_DEVEL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF
   )
 
