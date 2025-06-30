@@ -44,7 +44,68 @@ if(USE_SYSTEM_EIGEN STREQUAL "AUTO")
 endif()
 
 if(USE_SYSTEM_EIGEN)
-  message(STATUS "eigen_catkin is configured to USE system eigen")
+  find_package(Eigen3 REQUIRED)  # now guaranteed to exist
+  message(STATUS "eigen_catkin: using system Eigen from ${EIGEN3_INCLUDE_DIR}")
+  message(STATUS "Eigen version variables:"
+                "  Eigen3_VERSION        = '${Eigen3_VERSION}'"
+                "  EIGEN3_VERSION_STRING = '${EIGEN3_VERSION_STRING}'"
+                "  Final EIGEN3_VERSION  = '${EIGEN3_VERSION}'")
+
+  # Normalize the version into EIGEN3_VERSION (if not already set)
+  if(NOT DEFINED EIGEN3_VERSION OR EIGEN3_VERSION STREQUAL "")
+    if(DEFINED Eigen3_VERSION)
+      set(EIGEN3_VERSION "${Eigen3_VERSION}" CACHE INTERNAL "" FORCE)
+    elseif(DEFINED EIGEN3_VERSION_STRING)
+      set(EIGEN3_VERSION "${EIGEN3_VERSION_STRING}" CACHE INTERNAL "" FORCE)
+    else()
+      message(WARNING "Could not determine Eigen version: neither Eigen3_VERSION nor EIGEN3_VERSION_STRING is defined.")
+    endif()
+  endif()
+  # Only patch if it's exactly version 3.3.7
+  if(EIGEN3_VERSION VERSION_EQUAL "3.3.7")
+    message(STATUS "Eigen ${EIGEN3_VERSION} detected; applying custom patches")
+    message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR}")
+
+    set(_patch_dir     "${EIGEN3_INCLUDE_DIR}")
+    set(_patch_files
+      SelfAdjointEigenSolver337.patch
+      Tridiagonalization337.patch
+    )
+  
+    foreach(patch_file IN LISTS _patch_files)
+      set(_patch_path "${CMAKE_CURRENT_SOURCE_DIR}/${patch_file}")
+      message(STATUS "  -> Applying ${patch_file} in ${_patch_dir}")
+      execute_process(
+        COMMAND patch -N -p0 -i "${_patch_path}"
+        WORKING_DIRECTORY "${_patch_dir}"
+        RESULT_VARIABLE _res
+        OUTPUT_VARIABLE  _out
+        ERROR_VARIABLE   _err
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_STRIP_TRAILING_WHITESPACE
+      )
+      if(_res GREATER 1)
+        # Serious failure
+        message(FATAL_ERROR
+          "Failed to apply patch ${patch_file} (exit code ${_res})\n"
+          "----- patch stdout -----\n${_out}\n"
+          "----- patch stderr -----\n${_err}"
+        )
+      elseif(_res EQUAL 1)
+        # Hunk already applied or skipped
+        message(WARNING
+          "Patch ${patch_file} was already applied (or reversed). Skipping.\n"
+          "----- patch stdout -----\n${_out}\n"
+          "----- patch stderr -----\n${_err}"
+        )
+      else()
+        message(STATUS "Patch ${patch_file} applied successfully.")
+      endif()
+    endforeach()
+  else()
+    message(WARNING "Skipping Eigen patches: found version ${EIGEN3_VERSION}, expected 3.3.7")
+  endif()
+
   if(EXISTS ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE})
     file(RENAME ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE} ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE}.off)
 
@@ -87,7 +148,7 @@ else()
     URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.bz2
     URL_MD5 132dde48fe2b563211675626d29f1707
 
-    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/Tridiagonalization.patch
+    PATCH_COMMAND patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/Tridiagonalization340.patch
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${CATKIN_DEVEL_PREFIX} -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF
   )
 

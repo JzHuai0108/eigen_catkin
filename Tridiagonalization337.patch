@@ -1,0 +1,15 @@
+--- Eigen/src/Eigenvalues/Tridiagonalization.h	2018-12-12 01:57:55.000000000 +0800
++++ Eigen/src/Eigenvalues/Tridiagonalization.h	2025-06-30 14:53:04.647617083 +0800
+@@ -491,9 +491,9 @@
+       subdiag[1] = mat(2,1) - m01 * q;
+       if (extractQ)
+       {
+-        mat << 1,   0,    0,
+-               0, m01,  m02,
+-               0, m02, -m01;
++        mat << RealScalar(1),   RealScalar(0),    RealScalar(0),
++               RealScalar(0), m01,  m02,
++               RealScalar(0), m02, -m01;
+       }
+     }
+   }
