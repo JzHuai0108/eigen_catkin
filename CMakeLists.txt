@@ -15,7 +15,8 @@ set(EIGEN_MINIMUM_VERSION 3.3.4)
 # If set to OFF, will compile the given version of Eigen.
 # If set to ON, will use the system version of Eigen.
 # If set to AUTO, will determine if the system version is suitable.
-set(USE_SYSTEM_EIGEN "OFF" CACHE INTERNAL "Whether to use the system version of Eigen.")
+set(USE_SYSTEM_EIGEN "OFF" CACHE STRING "Whether to use the system version of Eigen. AUTO detect, ON use system, OFF use bundled")
+set_property(CACHE USE_SYSTEM_EIGEN PROPERTY STRINGS "AUTO" "ON" "OFF")
 
 # Check if the version is suitable, otherwise force downloading the newer one.
 if(USE_SYSTEM_EIGEN STREQUAL "AUTO")
