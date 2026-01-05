@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(eigen_catkin)
 
 find_package(catkin_simple REQUIRED)
@@ -11,11 +11,14 @@ set(EIGEN_CATKIN_EIGEN_INCLUDE ${CATKIN_DEVEL_PREFIX}/include/eigen3)
 set(EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE ${EIGEN_CATKIN_EIGEN_INCLUDE}/signature_of_eigen3_matrix_library)
 
 set(EIGEN_MINIMUM_VERSION 3.3.4)
-
+option(EIGEN_CATKIN_APPLY_SYSTEM_PATCHES
+  "Apply eigen_catkin patches to system Eigen (e.g., for 3.3.7). OFF by default."
+  OFF
+)
 # If set to OFF, will compile the given version of Eigen.
 # If set to ON, will use the system version of Eigen.
 # If set to AUTO, will determine if the system version is suitable.
-set(USE_SYSTEM_EIGEN "OFF" CACHE STRING "Whether to use the system version of Eigen. AUTO detect, ON use system, OFF use bundled")
+set(USE_SYSTEM_EIGEN "AUTO" CACHE STRING "Whether to use the system version of Eigen. AUTO detect, ON use system, OFF use bundled")
 set_property(CACHE USE_SYSTEM_EIGEN PROPERTY STRINGS "AUTO" "ON" "OFF")
 
 # Check if the version is suitable, otherwise force downloading the newer one.
@@ -63,16 +66,15 @@ if(USE_SYSTEM_EIGEN)
     endif()
   endif()
   # Only patch if it's exactly version 3.3.7
+if(EIGEN_CATKIN_APPLY_SYSTEM_PATCHES)
   if(EIGEN3_VERSION VERSION_EQUAL "3.3.7")
-    message(STATUS "Eigen ${EIGEN3_VERSION} detected; applying custom patches")
-    message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR}")
-
-    set(_patch_dir     "${EIGEN3_INCLUDE_DIR}")
+    message(STATUS "Eigen ${EIGEN3_VERSION} detected and patching is enabled; applying custom patches")
+    set(_patch_dir "${EIGEN3_INCLUDE_DIR}")
     set(_patch_files
       SelfAdjointEigenSolver337.patch
       Tridiagonalization337.patch
     )
-  
+
     foreach(patch_file IN LISTS _patch_files)
       set(_patch_path "${CMAKE_CURRENT_SOURCE_DIR}/${patch_file}")
       message(STATUS "  -> Applying ${patch_file} in ${_patch_dir}")
@@ -104,8 +106,11 @@ if(USE_SYSTEM_EIGEN)
       endif()
     endforeach()
   else()
-    message(WARNING "Skipping Eigen patches: found version ${EIGEN3_VERSION}, expected 3.3.7")
+    message(STATUS "Patching enabled, but Eigen version is ${EIGEN3_VERSION}; no patches applied.")
   endif()
+else()
+  message(STATUS "System Eigen patching disabled (EIGEN_CATKIN_APPLY_SYSTEM_PATCHES=OFF).")
+endif()
 
   if(EXISTS ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE})
     file(RENAME ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE} ${EIGEN_CATKIN_EIGEN_INCLUDE_SIGNATURE}.off)
